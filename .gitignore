@@ -1,0 +1,16 @@
+node_modules/
+ephe/
+jackpot_data.json
+# old/scratch files - matches server.js-09252617, app.js.backup-0917261627, etc.
+*.js-[0-9]*
+*.html-[0-9]*
+*.html.backup*
+*.js.backup*
+*backup*
+*Backup*
+*BACKUP*
+.*.swp
+.DS_Store
+.env
+.env.*
+api/node_modules/
