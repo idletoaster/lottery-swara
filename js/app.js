@@ -9,6 +9,11 @@ const allTithiLabels = [
 ];
 
 const CHANGELOG = [
+    { v: "1.9.15", date: "2026-10-12", changes: [
+        "Added precise Vedic Planetary Hora calculation to Live Swara and Daily Flow schedules.",
+        "Integrated discrete Hora Lord filtering to Alignment Scanner and Exact Time Scanner.",
+        "Ensured seamless cascading compatibility between Hora filters and Tattva Status (Purna/Sunya) bypassing."
+    ]},
     { v: "1.9.14", date: "2026-10-12", changes: [
         "Purged corrupted PWA execution cache preventing application startup sequence.",
         "Verified structural integrity of 'Tattva Status' Purna/Sunya UI mapping module."
@@ -41,7 +46,7 @@ const CHANGELOG = [
 ];
 
 if('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('sw.js?v=1.9.14').catch(console.error);
+    navigator.serviceWorker.register('sw.js?v=1.9.16').catch(console.error);
 }
 
 // Global Engine State Initialization
@@ -491,6 +496,26 @@ setInterval(() => {
     drUI.innerText = s.dayRule;
     drUI.style.color = (s.isIda === s.ruleIsIda) ? "var(--purna)" : "var(--text-muted)";
     
+    let activeHoraEl = document.getElementById('activeHora');
+    if(activeHoraEl) activeHoraEl.innerText = s.hora + " Lord";
+
+    let elHStart = document.getElementById('horaStart');
+    let elHEnd = document.getElementById('horaEnd');
+    let elHProg = document.getElementById('horaProgress');
+    let elHTimer = document.getElementById('horaTimer');
+
+    if(elHStart && s.hStart) elHStart.innerText = fT(s.hStart);
+    if(elHEnd && s.hEnd) elHEnd.innerText = fT(s.hEnd);
+    if(elHTimer && s.remHora !== undefined) {
+        let hMins = Math.floor(Math.max(0, s.remHora) / 60);
+        let hSecs = Math.floor(Math.max(0, s.remHora) % 60);
+        elHTimer.innerText = `${hMins.toString().padStart(2, '0')}m ${hSecs.toString().padStart(2, '0')}s remaining`;
+    }
+    if(elHProg && s.horaTotalMs) {
+        let hPct = 100 - ((s.remHora / (s.horaTotalMs / 1000)) * 100);
+        elHProg.style.width = `${Math.min(100, Math.max(0, hPct))}%`;
+    }
+    
     let preMins = parseInt(document.getElementById('preAlarmMins').value) * 60000;
     
     let nextAgnihotra = null;
@@ -542,7 +567,7 @@ setInterval(() => {
 }, 1000);
 
 // Instant Filter Change Listeners for Main Scanner
-['scanStatusFilter', 'scanFilter', 'scanTattvaFilter', 'scanYaamamFilter'].forEach(id => {
+['scanStatusFilter', 'scanFilter', 'scanTattvaFilter', 'scanYaamamFilter', 'scanHoraFilter'].forEach(id => {
     let el = document.getElementById(id);
     if (el) {
         el.addEventListener('change', () => {
@@ -566,6 +591,7 @@ function doScan(offset, targetScore = 0) {
     let sNadiFilter = document.getElementById('scanFilter').value;
     let sTattvaFilter = document.getElementById('scanTattvaFilter').value;
     let sYaamamFilter = document.getElementById('scanYaamamFilter').value;
+    let sHoraFilter = document.getElementById('scanHoraFilter') ? document.getElementById('scanHoraFilter').value : 'all';
     
     let startDate = new Date(baseInput + "T00:00:00");
     if (offset !== 0) {
@@ -598,8 +624,9 @@ function doScan(offset, targetScore = 0) {
                 let passNadi = (sNadiFilter === 'all' || sNadiFilter === currentType);
                 let passTattva = (sTattvaFilter === 'all' || sTattvaFilter.toLowerCase() === s.tattva.n.toLowerCase());
                 let passYaamam = (sYaamamFilter === 'all' || yamamElement.includes(sYaamamFilter));
+                let passHora = (sHoraFilter === 'all' || s.hora.toLowerCase() === sHoraFilter.toLowerCase());
 
-                if (passNadi && passTattva && passYaamam) {
+                if (passNadi && passTattva && passYaamam && passHora) {
                     let score = 0;
                     let matchedText = [];
                     
@@ -636,7 +663,7 @@ function doScan(offset, targetScore = 0) {
                                 <strong style="color:var(--purna)">${fT(s.tStart)} - ${fT(s.tEnd)}</strong>
                                 <strong style="color:${scoreColor};">${score}/7 Resonance</strong>
                             </div>
-                            <div style="font-size:0.9rem; margin-top:4px;"><strong>${s.isIda?'Ida':'Pingala'}</strong> + <strong>${s.tattva.n} ${s.tattva.i}</strong> (${s.yaamam})${statusTag}</div>
+                            <div style="font-size:0.9rem; margin-top:4px;"><strong>${s.isIda?'Ida':'Pingala'}</strong> + <strong>${s.tattva.n} ${s.tattva.i}</strong> (Y: ${s.yaamam.split('(')[0].trim()} | H: ${s.hora})${statusTag}</div>
                             <div style="font-size:0.8rem; color:var(--text-main); margin-top:4px;">
                                 <strong>Matched:</strong> ${matchedText.join(', ')}
                             </div>
@@ -658,7 +685,7 @@ function doScan(offset, targetScore = 0) {
 }
 
 // Instant Filter Change Listeners for Exact Time Scanner
-['exactStatusFilter', 'exactNadiFilter', 'exactTattvaFilter', 'exactYaamamFilter'].forEach(id => {
+['exactStatusFilter', 'exactNadiFilter', 'exactTattvaFilter', 'exactYaamamFilter', 'exactHoraFilter'].forEach(id => {
     let el = document.getElementById(id);
     if (el) {
         el.addEventListener('change', () => {
@@ -680,6 +707,7 @@ document.getElementById('btnExactScan').addEventListener('click', () => {
     let exactNadiFilter = document.getElementById('exactNadiFilter').value;
     let exactTattvaFilter = document.getElementById('exactTattvaFilter').value;
     let exactYaamamFilter = document.getElementById('exactYaamamFilter').value;
+    let exactHoraFilter = document.getElementById('exactHoraFilter') ? document.getElementById('exactHoraFilter').value : 'all';
     
     let effLoc = exactScannerLoc || loc;
     document.getElementById('exactScanResults').innerHTML = `<div style="text-align:center; padding:20px;">Generating scan map for <strong>${effLoc.name}</strong>...</div>`;
@@ -752,8 +780,9 @@ document.getElementById('btnExactScan').addEventListener('click', () => {
                 let passNadi = (exactNadiFilter === 'all' || exactNadiFilter === currentType);
                 let passTattva = (exactTattvaFilter === 'all' || exactTattvaFilter.toLowerCase() === s.tattva.n.toLowerCase());
                 let passYaamam = (exactYaamamFilter === 'all' || yamamElement.includes(exactYaamamFilter));
+                let passHora = (exactHoraFilter === 'all' || s.hora.toLowerCase() === exactHoraFilter.toLowerCase());
 
-                if (passNadi && passTattva && passYaamam) {
+                if (passNadi && passTattva && passYaamam && passHora) {
                     let isYamamMatch = yamamElement.includes(s.tattva.n); 
                     let nadiMatchesDay = (s.isIda === s.ruleIsIda); 
                     let pMatch = s.isIda === s.isShukla; 
@@ -780,7 +809,7 @@ document.getElementById('btnExactScan').addEventListener('click', () => {
                             <strong style="color:var(--text-main)">${dateStr} @ ${timeStrDisplay}</strong>
                             <strong style="color:${scoreColor};">${score}/7 Resonance</strong>
                         </div>
-                        <div style="font-size:0.9rem; margin-top:4px;"><strong>${s.isIda?'Ida':'Pingala'}</strong> + <strong>${s.tattva.n} ${s.tattva.i}</strong> (${s.yaamam.split('(')[0].trim()})${statusTag}</div>
+                        <div style="font-size:0.9rem; margin-top:4px;"><strong>${s.isIda?'Ida':'Pingala'}</strong> + <strong>${s.tattva.n} ${s.tattva.i}</strong> (Y: ${s.yaamam.split('(')[0].trim()} | H: ${s.hora})${statusTag}</div>
                         <div style="font-size:0.8rem; color:var(--text-main); margin-top:4px;">
                             <strong>Matched:</strong> ${matchedText.join(', ')}
                         </div>
@@ -832,7 +861,7 @@ document.getElementById('btnDailyScan').addEventListener('click', () => {
                 <div class="tattva-rows" id="nadi-rows-${nadiIdx}" style="display: ${isCurrentGroup ? 'block' : 'none'};">
                     <div class="table-wrapper">
                         <table class="daily-table">
-                            <thead><tr><th>Time</th><th>Tattva</th><th>Yaamam</th><th>Clearance</th><th>Score</th></tr></thead>
+                            <thead><tr><th>Time</th><th>Tattva</th><th>Yaamam / Hora</th><th>Clearance</th><th>Score</th></tr></thead>
                             <tbody>
             `;
             nadiIdx++;
@@ -863,7 +892,10 @@ document.getElementById('btnDailyScan').addEventListener('click', () => {
         html += `<tr class="${rowClass}" data-start="${s.tStart.getTime()}" data-end="${s.tEnd.getTime()}">
             <td style="white-space:nowrap;">${fT(s.tStart)} - ${fT(s.tEnd)}</td>
             <td><strong>${s.tattva.n} ${s.tattva.i}</strong></td>
-            <td style="white-space:nowrap;">${s.yaamam.split('(')[0].trim()}</td>
+            <td>
+                <div style="white-space:nowrap; margin-bottom:2px;">Y: ${s.yaamam.split('(')[0].trim()}</div>
+                <div style="white-space:nowrap; font-size:0.8rem; color:var(--text-muted);">Hora: <strong style="color:var(--text-main);">${s.hora}</strong></div>
+            </td>
             <td style="color:var(--purna); font-weight:bold;">${travelClearStr}</td>
             <td><strong style="color:${scoreColor};">${score}/7</strong></td>
         </tr>`;

@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>Vedic Swara Analytics v1.9.14</title>
-    <link rel="manifest" href="manifest.json?v=1.9.14">
+    <title>Vedic Swara Analytics v1.9.16</title>
+    <link rel="manifest" href="manifest.json?v=1.9.15">
  
     <link rel="apple-touch-icon" sizes="57x57" href="/apple-touch-icon.png">
     <link rel="apple-touch-icon" sizes="60x60" href="/apple-touch-icon.png">
@@ -20,12 +20,12 @@
 
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <link rel="stylesheet" type="text/css" href="https://npmcdn.com/flatpickr/dist/themes/dark.css">
-    <link rel="stylesheet" href="css/style.css?v=1.9.14">
+    <link rel="stylesheet" href="css/style.css?v=1.9.15">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
     <header class="mobile-header">
-        <h1>SwaraHub <span class="version-tag">v1.9.14</span></h1>
+        <h1>SwaraHub <span class="version-tag">v1.9.15</span></h1>
         <button id="themeToggleMobile" class="btn-icon">🌓</button>
     </header>
 
@@ -34,7 +34,7 @@
             <div class="sidebar-brand">
                 <div class="brand-title">
                     <h1>SwaraHub</h1>
-                    <span class="version-tag">v1.9.14</span>
+                    <span class="version-tag">v1.9.15</span>
                 </div>
                 <button id="themeToggleDesktop" class="btn-icon">🌓</button>
             </div>
@@ -156,7 +156,7 @@
                         </div>
 
                         <div class="card yamam-card">
-                            <h4 class="section-title">Macro Yaamam & Day Rule</h4>
+                            <h4 class="section-title">Yaamam & Planetary Hora</h4>
                             <h2 class="yamam-name" id="yamamName">...</h2>
                             <p class="yamam-period" id="yamamPeriod">...</p>
                             
@@ -167,11 +167,24 @@
                             <div class="progress-bar-container"><div class="progress-bar" id="yamamProgress"></div></div>
                             <div class="timer-text" id="yamamTimer">00m 00s remaining</div>
                             
-                            <div id="nextYamamInfo" style="font-size: 0.85rem; color: var(--text-main); text-align: center; margin-top: 10px; padding-top: 8px; border-top: 1px solid var(--border);">
+                            <div id="nextYamamInfo" style="font-size: 0.85rem; color: var(--text-main); text-align: center; margin-top: 10px; margin-bottom: 15px; padding-top: 8px; border-top: 1px solid var(--border);">
                                 <strong>Next Yaamam:</strong> ...
                             </div>
 
-                            <div class="day-rule-box">
+                            <!-- NEW HORA SECTION -->
+                            <div class="hora-box" style="margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--border);">
+                                <h4 class="section-title">Active Planetary Hora</h4>
+                                <h2 class="hora-name" id="activeHora" style="font-size: 1.4rem; color: var(--purna); margin: 4px 0 10px;">...</h2>
+                                
+                                <div class="tattva-timings" style="margin-bottom: 5px;">
+                                    <span>Started: <strong id="horaStart">--:--</strong></span>
+                                    <span>Ends: <strong id="horaEnd">--:--</strong></span>
+                                </div>
+                                <div class="progress-bar-container"><div class="progress-bar" id="horaProgress"></div></div>
+                                <div class="timer-text" id="horaTimer">00m 00s remaining</div>
+                            </div>
+
+                            <div class="day-rule-box" style="margin-top: 15px;">
                                 <h4 class="section-title">Vedic Day Rulership</h4>
                                 <div id="dayAlignment" class="day-alignment">...</div>
                             </div>
@@ -198,7 +211,7 @@
                 <section id="calendar" class="tab-content">
                     <div class="card">
                         <h3>Cosmic Confluence Scanner</h3>
-                        <p class="sub-text">Calculates exact alignments across 7 layers: <strong>Tattva, Nadi, Yaamam, Vaara, Paksha, Ayana, & Subtle Body.</strong></p>
+                        <p class="sub-text">Calculates exact alignments across 7 layers: <strong>Tattva, Nadi, Yaamam, Hora, Vaara, Paksha, & Ayana.</strong></p>
                         
                         <div class="cal-controls" style="margin-bottom: 10px; display: flex; gap: 10px;">
                             <input type="text" id="scanDate" class="flatpickr-input" placeholder="Select Date..." style="flex: 1;">
@@ -210,6 +223,7 @@
                             </select>
                         </div>
                         
+                        <!-- NEW MULTI-FILTERS -->
                         <div class="cal-controls" style="margin-bottom: 10px; display: flex; gap: 10px; flex-wrap: wrap;">
                             <select id="scanStatusFilter" style="flex: 1; min-width: 120px;">
                                 <option value="purna">Purna Tattvas Only</option>
@@ -234,6 +248,16 @@
                                 <option value="Water">Water</option>
                                 <option value="Agni">Agni</option>
                                 <option value="Vayu & Akasha">Vayu & Akasha</option>
+                            </select>
+                            <select id="scanHoraFilter" style="flex: 1; min-width: 120px;">
+                                <option value="all">Hora: All</option>
+                                <option value="Sun">Sun</option>
+                                <option value="Moon">Moon</option>
+                                <option value="Mars">Mars</option>
+                                <option value="Mercury">Mercury</option>
+                                <option value="Jupiter">Jupiter</option>
+                                <option value="Venus">Venus</option>
+                                <option value="Saturn">Saturn</option>
                             </select>
                         </div>
 
@@ -307,6 +331,16 @@
                                 <option value="Water">Water</option>
                                 <option value="Agni">Agni</option>
                                 <option value="Vayu & Akasha">Vayu & Akasha</option>
+                            </select>
+                            <select id="exactHoraFilter" style="flex: 1; min-width: 120px;">
+                                <option value="all">Hora: All</option>
+                                <option value="Sun">Sun</option>
+                                <option value="Moon">Moon</option>
+                                <option value="Mars">Mars</option>
+                                <option value="Mercury">Mercury</option>
+                                <option value="Jupiter">Jupiter</option>
+                                <option value="Venus">Venus</option>
+                                <option value="Saturn">Saturn</option>
                             </select>
                         </div>
 
@@ -477,7 +511,7 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-    <script src="js/astro-engine.js?v=1.9.14"></script>
-    <script src="js/app.js?v=1.9.14"></script>
+    <script src="js/astro-engine.js?v=1.9.16"></script>
+    <script src="js/app.js?v=1.9.16"></script>
 </body>
 </html>

@@ -198,6 +198,9 @@ const RASHIS = ["Mesham (Aries)", "Vrishabham (Taurus)", "Midhunam (Gemini)", "K
 const SOLAR_MONTHS = ["Mesha", "Vrishabha", "Mithuna", "Karkataka", "Simha", "Kanya", "Tula", "Vrischikam", "Dhanusu", "Makaram", "Kumbha", "Meenam"];
 const DIRS = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"];
 
+const HORA_SEQ = ["Sun", "Venus", "Mercury", "Moon", "Saturn", "Jupiter", "Mars"];
+const HORA_START = [0, 3, 6, 2, 5, 1, 4]; 
+
 const TATTVA_CHINTAMANI_IDA = [
     {n:"Earth", i:"🌍", r:"Mercury", s:"Purna", sub:"Full Result", p:"East", f:"West"},
     {n:"Water", i:"💧", r:"Moon", s:"Purna", sub:"Full Result", p:"West", f:"East"},
@@ -236,6 +239,7 @@ function getSwaraState(time, lat, lon, tz, mode = 'chintamani') {
     let nadiDurationMs = totalMs / 12;
     let tattvaDurationMs = nadiDurationMs / 5;
     let yaamamDurationMs = totalMs / 4;
+    let horaDurationMs = totalMs / 12;
 
     let nIdx = Math.floor(msSinceStart / nadiDurationMs); 
     let tIdx = Math.floor((msSinceStart % nadiDurationMs) / tattvaDurationMs); 
@@ -246,6 +250,17 @@ function getSwaraState(time, lat, lon, tz, mode = 'chintamani') {
         let tempGeo = getGeometricSunTimesForDate(new Date(time.getTime() - 43200000), lat, lon, tz);
         activeSunrise = tempGeo.rise;
     }
+
+    let tzActiveRise = shiftToTz(activeSunrise, tz);
+    let day = tzActiveRise.getDay(); 
+
+    let hIdxWithinPeriod = Math.min(11, Math.floor(msSinceStart / horaDurationMs));
+    let absoluteHoraIdx = b.isDay ? hIdxWithinPeriod : 12 + hIdxWithinPeriod;
+    let currentHoraLord = HORA_SEQ[(HORA_START[day] + absoluteHoraIdx) % 7];
+
+    let hStartMs = b.start.getTime() + (hIdxWithinPeriod * horaDurationMs);
+    let hEndMs = hStartMs + horaDurationMs;
+    let remHoraSecs = (hEndMs - time.getTime()) / 1000;
 
     let astroAtRise = getAstro(activeSunrise);
     let tithi = Math.floor(astroAtRise.diff / 12) + 1;
@@ -285,9 +300,6 @@ function getSwaraState(time, lat, lon, tz, mode = 'chintamani') {
     let nextYIdx = (yIdx + 1) % 4;
     let nextYType = yIdx === 3 ? (b.isDay ? "Night" : "Day") : yType;
     let nextYaamam = `${yaamams[nextYIdx]} (${nextYType})`;
-
-    let tzActiveRise = shiftToTz(activeSunrise, tz);
-    let day = tzActiveRise.getDay(); 
     
     let dayRule = "", ruleIsIda = false;
     
@@ -410,6 +422,8 @@ function getSwaraState(time, lat, lon, tz, mode = 'chintamani') {
         nStart: new Date(nadiStartMs), nEnd: new Date(nadiEndMs), remNadi: remNadiSecs, 
         tStart: new Date(tattvaStartMs), tEnd: new Date(tattvaEndMs), remTattva: remTattvaSecs, 
         yStart: new Date(yStartMs), yEnd: new Date(yEndMs), remYaamam: remYaamamSecs, yaamamTotalMs: yaamamDurationMs, nextYaamam: nextYaamam,
+        hora: currentHoraLord,
+        hStart: new Date(hStartMs), hEnd: new Date(hEndMs), remHora: remHoraSecs, horaTotalMs: horaDurationMs,
         geomRise: activeSunrise, geomSet: b.todaySet, nextRise: b.nextRise,
         yaamam: `${yaamams[yIdx]} (${yType})`, dayRule, ruleIsIda,
         isShukla: isShukla, ayanaIda: ayanaIda,

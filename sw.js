@@ -1,11 +1,11 @@
-const CACHE_NAME = 'swara-v1.9.14';
+const CACHE_NAME = 'swara-v1.9.15';
 const ASSETS = [
     './',
     './index.html',
-    './css/style.css?v=1.9.14',
-    './js/astro-engine.js?v=1.9.14',
-    './js/app.js?v=1.9.14',
-    './manifest.json?v=1.9.14',
+    './css/style.css?v=1.9.15',
+    './js/astro-engine.js?v=1.9.15',
+    './js/app.js?v=1.9.15',
+    './manifest.json?v=1.9.15',
     'https://cdn.jsdelivr.net/npm/chart.js',
     'https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css',
     'https://cdn.jsdelivr.net/npm/flatpickr'
